@@ -1,7 +1,7 @@
 import time
 import typing
 import http
-from http.client import HTTPConnection, HTTPResponse
+from http.client import HTTPConnection, HTTPResponse,HTTPSConnection
 import nb_log
 
 from universal_object_pool import ObjectPool, AbstractObject
@@ -18,9 +18,9 @@ class HttpOperator(AbstractObject):
     """ 这个请求速度暴击requests，可以自行测试请求nginx网关本身"""
     error_type_list_set_not_available = [http.client.CannotSendRequest]
 
-    def __init__(self, host, port=None, timeout=5,
+    def __init__(self, host, port=None, timeout=25,
                  source_address=None):
-        self.conn = HTTPConnection(host=host, port=port, timeout=timeout, source_address=source_address, )
+        self.conn = HTTPSConnection(host=host, port=port, timeout=timeout, source_address=source_address, )
         self.core_obj = self.conn
 
     def clean_up(self):
@@ -37,6 +37,13 @@ class HttpOperator(AbstractObject):
         resp = self.conn.getresponse()
         resp.content = resp.read()
         resp.text = resp.content.decode(encoding)
+        return resp  # noqa
+    def request_and_read(self, method, url, body=None, headers={}, *,
+                                encode_chunked=False, encoding="utf-8") -> CustomHTTPResponse:
+        self.conn.request(method, url, body=body, headers=headers,
+                          encode_chunked=encode_chunked)
+        resp = self.conn.getresponse()
+        resp.content = resp.read()
         return resp  # noqa
 
 
